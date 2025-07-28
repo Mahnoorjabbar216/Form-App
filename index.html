@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Form App</title>
+  <link rel="stylesheet" type="text/css" href="stylesheet.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+  <header class="app-header">
+    <h2>FORM</h2>
+  </header>
+
+  <div class="central-wrapper"></div>
+    <form id="form">
+      <h2>Enter Your Details</h2>
+
+      <label for="First-name">First Name :</label>
+      <input type="text" id="First-name" placeholder="Enter First Name" required><br><br>
+
+      <label for="Last-name">Last Name :</label>
+      <input type="text" id="Last-name" placeholder="Enter Last Name" required><br><br>
+
+      <label for="contact">Contact Number :</label>
+      <input type="tel" id="contact" maxlength="13" placeholder="03xxxxxxxxx" required><br><br>
+
+      <label for="email">Email :</label>
+      <input type="email" id="email" placeholder="abc@example.com" required><br><br>
+
+      <button type="submit">Submit</button>
+    </form>
+  </div>
+
+  <!--display the submitted data-->
+  <h3 id="h3" style="display: none;">:Submitted Data:</h3>
+  <table border="1" id="dataTable" style="display: none;">
+    <thead>
+      <tr>
+        <th>First Name</th>
+        <th>Last Name</th>
+        <th>Contact</th>
+        <th>Email</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- New entries will appear here -->
+    </tbody>
+  </table>
+
+
+  <!--button for download-->
+  <button id="download-button" style="display: none;">Download Excel File</button>
+
+<script>
+  let fileCounter = 1; // for creating unique file names
+  let editIndex = -1; // Track row index being edited
+  let data = []; // Store all form submissions
+
+  document.getElementById("form").addEventListener("submit", function (e) {
+  e.preventDefault(); // prevent form from refreshing the page
+
+  // Get form values
+  const firstName = document.getElementById("First-name").value;
+  const lastName = document.getElementById("Last-name").value;
+  const contact = document.getElementById("contact").value;
+  const email = document.getElementById("email").value;
+
+  // ✅ Validate contact number
+  const phoneRegex = /^\d{11}$/; // exactly 13 digits regular expression
+  if (!phoneRegex.test(contact)) {
+    alert("Contact number must be exactly 11 digits only.");
+    return;
+  }
+
+  const table = document.getElementById("dataTable").getElementsByTagName('tbody')[0];
+  document.getElementById('h3').style.display = "block";
+  document.getElementById('dataTable').style.display = "block";
+
+  if (editIndex === -1) {
+    const row = table.insertRow(); // add new row
+    // fill in the cells with data
+    row.insertCell(0).textContent = firstName;
+    row.insertCell(1).textContent = lastName;
+    row.insertCell(2).textContent = contact;
+    row.insertCell(3).textContent = email;
+
+    // creating update button
+    const editBtn = document.createElement("button");
+    //text of button
+    editBtn.textContent = "Update";
+    //button functionalty
+    editBtn.onclick = function () {
+      editIndex = row.rowIndex - 1;
+      const cells = table.rows[editIndex].cells;
+      // again load the rows into form
+      document.getElementById("First-name").value = cells[0].textContent;
+      document.getElementById("Last-name").value = cells[1].textContent;
+      document.getElementById("contact").value = cells[2].textContent;
+      document.getElementById("email").value = cells[3].textContent;
+    };
+    const editCell = row.insertCell(4);
+    editCell.appendChild(editBtn);
+
+    data.push({
+      "First Name": firstName,
+      "Last Name": lastName,
+      "Contact": contact,
+      "Email": email
+    });
+
+  } else {
+    const row = table.rows[editIndex];
+    row.cells[0].textContent = firstName;
+    row.cells[1].textContent = lastName;
+    row.cells[2].textContent = contact;
+    row.cells[3].textContent = email;
+
+    data[editIndex] = {
+      "First Name": firstName,
+      "Last Name": lastName,
+      "Contact": contact,
+      "Email": email
+    };
+
+    editIndex = -1;
+  }
+
+  document.getElementById('download-button').style.display = "block";
+  document.getElementById("form").reset();
+});
+
+  // DOWNLOAD Excel on button click
+  document.getElementById("download-button").addEventListener("click", function () {
+    if (data.length === 0) {
+      alert("No data to export.");
+      return;
+    }
+
+    const worksheet = XLSX.utils.json_to_sheet(data);// converting into excel sheet format
+    const workbook = XLSX.utils.book_new(); //create a new excel file
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Form Submission");// add that excel format data into file
+
+    const filename = `form_data_${fileCounter}.xlsx`;
+    XLSX.writeFile(workbook, filename); //download the file
+    fileCounter++;
+  });
+</script>
+
+
+</body>
+</html>
